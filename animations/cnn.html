@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation CNN Complète - Forward & Backward Pass</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .forward-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .backward-btn {
+            background: linear-gradient(45deg, #FF5722, #E64A19);
+        }
+
+        .animation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .layer-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 1400px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .layer-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .convolution-demo, .pooling-demo, .fc-demo {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .matrix {
+            display: grid;
+            gap: 2px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .input-matrix { grid-template-columns: repeat(5, 1fr); }
+        .kernel-matrix { grid-template-columns: repeat(3, 1fr); }
+        .output-matrix { grid-template-columns: repeat(3, 1fr); }
+        .pooling-input { grid-template-columns: repeat(4, 1fr); }
+        .pooling-output { grid-template-columns: repeat(2, 1fr); }
+        .fc-input { grid-template-columns: repeat(4, 1fr); }
+        .fc-hidden { grid-template-columns: repeat(3, 1fr); }
+        .fc-output { grid-template-columns: repeat(2, 1fr); }
+
+        .input-cell { background: #e3f2fd; }
+        .kernel-cell { background: #fff3e0; }
+        .output-cell { background: #e8f5e8; }
+        .pooling-cell { background: #f3e5f5; }
+        .pooling-result { background: #c8e6c9; }
+        .fc-cell { background: #fce4ec; }
+        .fc-hidden-cell { background: #f1f8e9; }
+        .fc-output-cell { background: #e0f2f1; }
+
+        .highlighted {
+            background: #ffeb3b !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+        }
+
+        .result-highlighted {
+            background: #ff5722 !important;
+            color: white !important;
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(255, 87, 34, 0.7);
+        }
+
+        .gradient-highlighted {
+            background: #9c27b0 !important;
+            color: white !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(156, 39, 176, 0.7);
+        }
+
+        .weight-update {
+            background: #ff9800 !important;
+            color: white !important;
+            transform: scale(1.15);
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #FFD700;
+            margin: 0 10px;
+        }
+
+        .backward-arrow {
+            font-size: 2em;
+            color: #FF5722;
+            margin: 0 10px;
+        }
+
+        .explanation {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #FFD700;
+        }
+
+        .step-info {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .backward-step-info {
+            background: rgba(255, 87, 34, 0.2);
+            border: 1px solid rgba(255, 87, 34, 0.3);
+        }
+
+        .calculation {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .network-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .network-layer {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .network-layer h4 {
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .loss-display {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loss-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f44336;
+        }
+
+        .weights-section {
+            background: rgba(156, 39, 176, 0.2);
+            border: 2px solid rgba(156, 39, 176, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .weight-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 200px;
+            margin: 10px auto;
+        }
+
+        .weight-cell {
+            width: 50px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            background: rgba(156, 39, 176, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .convolution-demo, .pooling-demo, .fc-demo {
+                flex-direction: column;
+            }
+            
+            .cell {
+                width: 25px;
+                height: 25px;
+                font-size: 10px;
+            }
+            
+            .network-flow {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 CNN Complet - Forward & Backward Pass</h1>
+        
+        <div class="controls">
+            <button class="forward-btn" onclick="runForwardPass()">▶️ Forward Pass</button>
+            <button class="backward-btn" onclick="runBackwardPass()">◀️ Backward Pass</button>
+            <button onclick="runCompleteTraining()">🎯 Training Complet</button>
+            <button onclick="resetAnimation()">🔄 Reset</button>
+        </div>
+
+        <!-- Vue d'ensemble du réseau -->
+        <div class="network-flow">
+            <div class="network-layer">
+                <h4>🖼️ Input</h4>
+                <div class="matrix input-matrix" id="network-input" style="grid-template-columns: repeat(3, 1fr);"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="network-layer">
+                <h4>🔍 Conv</h4>
+                <div class="matrix output-matrix" id="network-conv" style="grid-template-columns: repeat(2, 1fr);"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="network-layer">
+                <h4>📉 Pool</h4>
+                <div class="matrix pooling-output" id="network-pool" style="grid-template-columns: repeat(1, 1fr);"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="network-layer">
+                <h4>🔗 FC</h4>
+                <div class="matrix fc-output" id="network-fc" style="grid-template-columns: repeat(2, 1fr);"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="network-layer">
+                <h4>📊 Output</h4>
+                <div class="matrix fc-output" id="network-output" style="grid-template-columns: repeat(2, 1fr);"></div>
+            </div>
+        </div>
+
+        <div class="animation-container">
+            <!-- Section Convolution -->
+            <div class="layer-section">
+                <div class="layer-title">🔍 Couche de Convolution</div>
+                <div class="step-info" id="conv-step-info">En attente du Forward Pass...</div>
+                
+                <div class="convolution-demo">
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Image (3×3)</h3>
+                        <div class="matrix input-matrix" id="input-matrix" style="grid-template-columns: repeat(3, 1fr);"></div>
+                    </div>
+                    <div class="arrow">⊗</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Kernel (2×2)</h3>
+                        <div class="matrix kernel-matrix" id="kernel-matrix" style="grid-template-columns: repeat(2, 1fr);"></div>
+                    </div>
+                    <div class="arrow">=</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Feature Map (2×2)</h3>
+                        <div class="matrix output-matrix" id="output-matrix" style="grid-template-columns: repeat(2, 1fr);"></div>
+                    </div>
+                </div>
+                
+                <div class="weights-section" id="conv-weights-section" style="display: none;">
+                    <h4 style="text-align: center; color: #9c27b0;">Ajustement des Poids du Kernel</h4>
+                    <div style="display: flex; justify-content: center; gap: 30px; align-items: center;">
+                        <div>
+                            <h5>Avant</h5>
+                            <div class="weight-matrix" id="kernel-before"></div>
+                        </div>
+                        <div class="backward-arrow">←</div>
+                        <div>
+                            <h5>Gradients</h5>
+                            <div class="weight-matrix" id="kernel-gradients"></div>
+                        </div>
+                        <div class="backward-arrow">→</div>
+                        <div>
+                            <h5>Après</h5>
+                            <div class="weight-matrix" id="kernel-after"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calculation" id="conv-calculation">Calcul: En attente...</div>
+            </div>
+
+            <!-- Section Pooling -->
+            <div class="layer-section">
+                <div class="layer-title">📉 Max Pooling</div>
+                <div class="step-info" id="pool-step-info">En attente...</div>
+                
+                <div class="pooling-demo">
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Feature Map (2×2)</h3>
+                        <div class="matrix pooling-input" id="pooling-input" style="grid-template-columns: repeat(2, 1fr);"></div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Pooled (1×1)</h3>
+                        <div class="matrix pooling-output" id="pooling-output" style="grid-template-columns: repeat(1, 1fr);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Fully Connected -->
+            <div class="layer-section">
+                <div class="layer-title">🔗 Couches Entièrement Connectées (FC)</div>
+                <div class="step-info" id="fc-step-info">En attente...</div>
+                
+                <div class="fc-demo">
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Input Flatten</h3>
+                        <div class="matrix fc-input" id="fc-input" style="grid-template-columns: repeat(1, 1fr);"></div>
+                    </div>
+                    <div class="arrow">×</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Poids W1</h3>
+                        <div class="matrix" id="fc-weights1" style="grid-template-columns: repeat(3, 1fr);"></div>
+                    </div>
+                    <div class="arrow">=</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Hidden Layer</h3>
+                        <div class="matrix fc-hidden" id="fc-hidden" style="grid-template-columns: repeat(3, 1fr);"></div>
+                    </div>
+                    <div class="arrow">×</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Poids W2</h3>
+                        <div class="matrix" id="fc-weights2" style="grid-template-columns: repeat(2, 1fr);"></div>
+                    </div>
+                    <div class="arrow">=</div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Output</h3>
+                        <div class="matrix fc-output" id="fc-output" style="grid-template-columns: repeat(2, 1fr);"></div>
+                    </div>
+                </div>
+
+                <div class="weights-section" id="fc-weights-section" style="display: none;">
+                    <h4 style="text-align: center; color: #9c27b0;">Ajustement des Poids FC</h4>
+                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
+                        <div>
+                            <h5>Poids W1 - Gradients</h5>
+                            <div class="weight-matrix" id="fc1-gradients" style="grid-template-columns: repeat(3, 1fr);"></div>
+                        </div>
+                        <div>
+                            <h5>Poids W2 - Gradients</h5>
+                            <div class="weight-matrix" id="fc2-gradients" style="grid-template-columns: repeat(2, 1fr);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calculation" id="fc-calculation">Calcul: En attente...</div>
+            </div>
+
+            <!-- Section Loss et Backward -->
+            <div class="layer-section">
+                <div class="layer-title">📊 Loss & Rétropropagation</div>
+                <div class="loss-display">
+                    <h4>Fonction de Perte (MSE)</h4>
+                    <div>Target: [1.0, 0.0]</div>
+                    <div>Prédiction: <span id="prediction-display">[?, ?]</span></div>
+                    <div class="loss-value" id="loss-value">Loss: ?</div>
+                </div>
+                
+                <div class="explanation">
+                    <strong>Processus d'Apprentissage :</strong><br>
+                    1. <strong>Forward Pass</strong> : Les données traversent le réseau<br>
+                    2. <strong>Calcul de la Loss</strong> : Comparaison avec la cible<br>
+                    3. <strong>Backward Pass</strong> : Calcul des gradients par rétropropagation<br>
+                    4. <strong>Mise à jour</strong> : Ajustement des poids selon les gradients
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Données du réseau
+        let inputData = [
+            [1.0, 0.5, 0.2],
+            [0.8, 1.0, 0.3],
+            [0.1, 0.4, 0.9]
+        ];
+
+        let kernelData = [
+            [0.5, -0.2],
+            [0.1, 0.8]
+        ];
+
+        let fc1Weights = [
+            [0.3, 0.5, -0.2],
+            [0.7, -0.1, 0.4],
+            [0.2, 0.6, 0.8]
+        ];
+
+        let fc2Weights = [
+            [0.4, -0.3],
+            [0.6, 0.7],
+            [-0.2, 0.5]
+        ];
+
+        let target = [1.0, 0.0];
+        let learningRate = 0.1;
+        let currentPrediction = [0, 0];
+        let currentLoss = 0;
+
+        // Variables pour l'animation
+        let isAnimating = false;
+        let forwardResults = {};
+
+        function initializeNetworkView() {
+            // Initialiser la vue réseau avec des placeholders
+            const layers = ['network-input', 'network-conv', 'network-pool', 'network-fc', 'network-output'];
+            layers.forEach(layerId => {
+                const container = document.getElementById(layerId);
+                if (container) {
+                    container.innerHTML = '';
+                    const cellCount = layerId.includes('input') ? 9 : layerId.includes('conv') ? 4 : 
+                                    layerId.includes('pool') ? 1 : 2;
+                    for (let i = 0; i < cellCount; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell fc-cell';
+                        cell.textContent = '?';
+                        container.appendChild(cell);
+                    }
+                }
+            });
+        }
+
+        function createMatrix(containerId, data, cellClass) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (Array.isArray(data[0])) {
+                // Matrix 2D
+                for (let i = 0; i < data.length; i++) {
+                    for (let j = 0; j < data[i].length; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = `cell ${cellClass}`;
+                        cell.textContent = typeof data[i][j] === 'number' ? 
+                                          data[i][j].toFixed(2) : data[i][j];
+                        cell.id = `${containerId}-${i}-${j}`;
+                        container.appendChild(cell);
+                    }
+                }
+            } else {
+                // Array 1D
+                for (let i = 0; i < data.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${cellClass}`;
+                    cell.textContent = typeof data[i] === 'number' ? 
+                                      data[i].toFixed(2) : data[i];
+                    cell.id = `${containerId}-${i}`;
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function createWeightMatrix(containerId, data) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (Array.isArray(data[0])) {
+                for (let i = 0; i < data.length; i++) {
+                    for (let j = 0; j < data[i].length; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'weight-cell';
+                        cell.textContent = data[i][j].toFixed(2);
+                        cell.id = `${containerId}-${i}-${j}`;
+                        container.appendChild(cell);
+                    }
+                }
+            } else {
+                for (let i = 0; i < data.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'weight-cell';
+                    cell.textContent = data[i].toFixed(2);
+                    cell.id = `${containerId}-${i}`;
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function convolution2D(input, kernel) {
+            const inputRows = input.length;
+            const inputCols = input[0].length;
+            const kernelRows = kernel.length;
+            const kernelCols = kernel[0].length;
+            
+            const outputRows = inputRows - kernelRows + 1;
+            const outputCols = inputCols - kernelCols + 1;
+            
+            const output = [];
+            
+            for (let i = 0; i < outputRows; i++) {
+                output[i] = [];
+                for (let j = 0; j < outputCols; j++) {
+                    let sum = 0;
+                    for (let ki = 0; ki < kernelRows; ki++) {
+                        for (let kj = 0; kj < kernelCols; kj++) {
+                            sum += input[i + ki][j + kj] * kernel[ki][kj];
+                        }
+                    }
+                    output[i][j] = sum;
+                }
+            }
+            return output;
+        }
+
+        function maxPool2D(input, poolSize = 2) {
+            const rows = input.length;
+            const cols = input[0].length;
+            const output = [];
+            
+            for (let i = 0; i < rows; i += poolSize) {
+                const outputRow = [];
+                for (let j = 0; j < cols; j += poolSize) {
+                    let max = -Infinity;
+                    for (let pi = 0; pi < poolSize && i + pi < rows; pi++) {
+                        for (let pj = 0; pj < poolSize && j + pj < cols; pj++) {
+                            max = Math.max(max, input[i + pi][j + pj]);
+                        }
+                    }
+                    outputRow.push(max);
+                }
+                if (outputRow.length > 0) output.push(outputRow);
+            }
+            return output;
+        }
+
+        function flatten(matrix) {
+            return matrix.flat();
+        }
+
+        function matrixMultiply(a, b) {
+            const result = [];
+            for (let i = 0; i < a.length; i++) {
+                result[i] = 0;
+                for (let j = 0; j < b[0].length; j++) {
+                    if (!result[i]) result[i] = 0;
+                    for (let k = 0; k < b.length; k++) {
+                        result[i] += a[k] * b[k][j];
+                    }
+                }
+            }
+            return result;
+        }
+
+        function relu(x) {
+            return Math.max(0, x);
+        }
+
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-x));
+        }
+
+        function calculateMSE(predicted, target) {
+            let sum = 0;
+            for (let i = 0; i < predicted.length; i++) {
+                sum += Math.pow(predicted[i] - target[i], 2);
+            }
+            return sum / predicted.length;
+        }
+
+        async function runForwardPass() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // Réinitialiser
+            document.querySelectorAll('.weights-section').forEach(el => el.style.display = 'none');
+            
+            // 1. Afficher l'input
+            document.getElementById('conv-step-info').textContent = 'Étape 1: Input - Image 3×3';
+            createMatrix('input-matrix', inputData, 'input-cell');
+            createMatrix('kernel-matrix', kernelData, 'kernel-cell');
+            
+            // Mettre à jour vue réseau
+            const flatInput = inputData.flat();
+            flatInput.forEach((val, i) => {
+                const cell = document.getElementById('network-input').children[i];
+                if (cell) cell.textContent = val.toFixed(1);
+            });
+            
+            await sleep(1500);
+
+            // 2. Convolution
+            document.getElementById('conv-step-info').textContent = 'Étape 2: Convolution - Application du kernel';
+            const convResult = convolution2D(inputData, kernelData);
+            forwardResults.conv = convResult;
+            
+            createMatrix('output-matrix', convResult, 'output-cell');
+            document.getElementById('conv-calculation').textContent = 
+                `Convolution: ${convResult.flat().map(x => x.toFixed(2)).join(', ')}`;
+            
+            // Mettre à jour vue réseau
+            const flatConv = convResult.flat();
+            flatConv.forEach((val, i) => {
+                const cell = document.getElementById('network-conv').children[i];
+                if (cell) cell.textContent = val.toFixed(1);
+            });
+            
+            await sleep(1500);
+
+            // 3. Pooling
+            document.getElementById('pool-step-info').textContent = 'Étape 3: Max Pooling';
+            createMatrix('pooling-input', convResult, 'pooling-cell');
+            
+            const poolResult = maxPool2D(convResult, 2);
+            forwardResults.pool = poolResult;
+            
+            createMatrix('pooling-output', poolResult, 'pooling-result');
+            
+            // Mettre à jour vue réseau
+            const flatPool = poolResult.flat();
+            flatPool.forEach((val, i) => {
+                const cell = document.getElementById('network-pool').children[i];
+                if (cell) cell.textContent = val.toFixed(1);
+            });
+            
+            await sleep(1500);
+
+            // 4. Flatten et FC
+            document.getElementById('fc-step-info').textContent = 'Étape 4: Fully Connected Layers';
+            const flattened = flatten(poolResult);
+            forwardResults.flattened = flattened;
+            
+            createMatrix('fc-input', flattened, 'fc-cell');
+            createMatrix('fc-weights1', fc1Weights, 'kernel-cell');
+            
+            // Calcul hidden layer
+            const hiddenRaw = [];
+            for (let i = 0; i < fc1Weights[0].length; i++) {
+                let sum = 0;
+                for (let j = 0; j < flattened.length; j++) {
+                    sum += flattened[j] * fc1Weights[j][i];
+                }
+                hiddenRaw.push(relu(sum));
+            }
+            forwardResults.hidden = hiddenRaw;
+            
+            createMatrix('fc-hidden', hiddenRaw, 'fc-hidden-cell');
+            createMatrix('fc-weights2', fc2Weights, 'kernel-cell');
+            
+            await sleep(1500);
+
+            // 5. Output layer
+            const outputRaw = [];
+            for (let i = 0; i < fc2Weights[0].length; i++) {
+                let sum = 0;
+                for (let j = 0; j < hiddenRaw.length; j++) {
+                    sum += hiddenRaw[j] * fc2Weights[j][i];
+                }
+                outputRaw.push(sigmoid(sum));
+            }
+            forwardResults.output = outputRaw;
+            currentPrediction = outputRaw;
+            
+            createMatrix('fc-output', outputRaw, 'fc-output-cell');
+            document.getElementById('fc-calculation').textContent = 
+                `Output: [${outputRaw.map(x => x.toFixed(3)).join(', ')}]`;
+            
+            // Mettre à jour vue réseau
+            outputRaw.forEach((val, i) => {
+                const fcCell = document.getElementById('network-fc').children[i];
+                const outCell = document.getElementById('network-output').children[i];
+                if (fcCell) fcCell.textContent = val.toFixed(2);
+                if (outCell) outCell.textContent = val.toFixed(2);
+            });
+            
+            await sleep(1500);
+
+            // 6. Calcul de la loss
+            currentLoss = calculateMSE(outputRaw, target);
+            document.getElementById('prediction-display').textContent = 
+                `[${outputRaw.map(x => x.toFixed(3)).join(', ')}]`;
+            document.getElementById('loss-value').textContent = `Loss: ${currentLoss.toFixed(4)}`;
+            
+            document.getElementById('fc-step-info').textContent = 
+                'Forward Pass terminé ! Loss calculée.';
+            
+            isAnimating = false;
+        }
+
+        async function runBackwardPass() {
+            if (isAnimating) return;
+            if (!forwardResults.output) {
+                alert('Veuillez d\'abord exécuter le Forward Pass !');
+                return;
+            }
+            
+            isAnimating = true;
+
+            // Afficher les sections de poids
+            document.querySelectorAll('.weights-section').forEach(el => el.style.display = 'block');
+            
+            document.getElementById('conv-step-info').textContent = 'Rétropropagation: Calcul des gradients';
+            document.getElementById('fc-step-info').textContent = 'Backward Pass: Mise à jour des poids';
+
+            // 1. Gradients de la loss par rapport à l'output
+            const outputError = [];
+            for (let i = 0; i < currentPrediction.length; i++) {
+                outputError[i] = 2 * (currentPrediction[i] - target[i]) / target.length;
+            }
+
+            await sleep(1000);
+
+            // 2. Gradients pour FC2 (poids de sortie)
+            const fc2Gradients = [];
+            for (let i = 0; i < fc2Weights.length; i++) {
+                fc2Gradients[i] = [];
+                for (let j = 0; j < fc2Weights[i].length; j++) {
+                    // Gradient = erreur_sortie * activation_cachée * dérivée_sigmoid
+                    const sigmoidDerivative = currentPrediction[j] * (1 - currentPrediction[j]);
+                    fc2Gradients[i][j] = outputError[j] * forwardResults.hidden[i] * sigmoidDerivative;
+                }
+            }
+
+            createWeightMatrix('fc2-gradients', fc2Gradients);
+            
+            // Animation des gradients FC2
+            for (let i = 0; i < fc2Gradients.length; i++) {
+                for (let j = 0; j < fc2Gradients[i].length; j++) {
+                    const cell = document.getElementById(`fc2-gradients-${i}-${j}`);
+                    if (cell) {
+                        cell.classList.add('gradient-highlighted');
+                        await sleep(100);
+                    }
+                }
+            }
+
+            await sleep(1000);
+
+            // 3. Propagation vers la couche cachée
+            const hiddenError = [];
+            for (let i = 0; i < forwardResults.hidden.length; i++) {
+                let sum = 0;
+                for (let j = 0; j < outputError.length; j++) {
+                    const sigmoidDerivative = currentPrediction[j] * (1 - currentPrediction[j]);
+                    sum += outputError[j] * fc2Weights[i][j] * sigmoidDerivative;
+                }
+                hiddenError[i] = sum;
+            }
+
+            // 4. Gradients pour FC1
+            const fc1Gradients = [];
+            for (let i = 0; i < fc1Weights.length; i++) {
+                fc1Gradients[i] = [];
+                for (let j = 0; j < fc1Weights[i].length; j++) {
+                    // Dérivée de ReLU
+                    const reluDerivative = forwardResults.hidden[j] > 0 ? 1 : 0;
+                    fc1Gradients[i][j] = hiddenError[j] * forwardResults.flattened[i] * reluDerivative;
+                }
+            }
+
+            createWeightMatrix('fc1-gradients', fc1Gradients);
+            
+            // Animation des gradients FC1
+            for (let i = 0; i < fc1Gradients.length; i++) {
+                for (let j = 0; j < fc1Gradients[i].length; j++) {
+                    const cell = document.getElementById(`fc1-gradients-${i}-${j}`);
+                    if (cell) {
+                        cell.classList.add('gradient-highlighted');
+                        await sleep(100);
+                    }
+                }
+            }
+
+            await sleep(1000);
+
+            // 5. Propagation vers la convolution
+            let convError = [];
+            for (let i = 0; i < forwardResults.pool.length; i++) {
+                convError[i] = [];
+                for (let j = 0; j < forwardResults.pool[i].length; j++) {
+                    let sum = 0;
+                    const flatIndex = i * forwardResults.pool[i].length + j;
+                    for (let h = 0; h < hiddenError.length; h++) {
+                        sum += hiddenError[h] * fc1Weights[flatIndex][h];
+                    }
+                    convError[i][j] = sum;
+                }
+            }
+
+            // 6. Gradients du kernel (convolution)
+            const kernelGradients = [];
+            for (let i = 0; i < kernelData.length; i++) {
+                kernelGradients[i] = [];
+                for (let j = 0; j < kernelData[i].length; j++) {
+                    let sum = 0;
+                    // Pour chaque position où le kernel a été appliqué
+                    for (let cr = 0; cr < forwardResults.conv.length; cr++) {
+                        for (let cc = 0; cc < forwardResults.conv[cr].length; cc++) {
+                            // Le gradient du kernel = erreur_conv * input correspondant
+                            sum += convError[cr][cc] * inputData[cr + i][cc + j];
+                        }
+                    }
+                    kernelGradients[i][j] = sum;
+                }
+            }
+
+            createWeightMatrix('kernel-gradients', kernelGradients);
+            createWeightMatrix('kernel-before', kernelData);
+
+            // Animation des gradients du kernel
+            for (let i = 0; i < kernelGradients.length; i++) {
+                for (let j = 0; j < kernelGradients[i].length; j++) {
+                    const cell = document.getElementById(`kernel-gradients-${i}-${j}`);
+                    if (cell) {
+                        cell.classList.add('gradient-highlighted');
+                        await sleep(200);
+                    }
+                }
+            }
+
+            await sleep(1000);
+
+            // 7. Mise à jour des poids
+            document.getElementById('conv-step-info').textContent = 'Mise à jour des poids avec les gradients';
+            
+            // Mise à jour du kernel
+            const newKernelData = [];
+            for (let i = 0; i < kernelData.length; i++) {
+                newKernelData[i] = [];
+                for (let j = 0; j < kernelData[i].length; j++) {
+                    newKernelData[i][j] = kernelData[i][j] - learningRate * kernelGradients[i][j];
+                }
+            }
+            
+            createWeightMatrix('kernel-after', newKernelData);
+
+            // Animation de mise à jour des poids
+            for (let i = 0; i < newKernelData.length; i++) {
+                for (let j = 0; j < newKernelData[i].length; j++) {
+                    const cell = document.getElementById(`kernel-after-${i}-${j}`);
+                    if (cell) {
+                        cell.classList.add('weight-update');
+                        await sleep(200);
+                    }
+                }
+            }
+
+            // Mise à jour FC1
+            for (let i = 0; i < fc1Weights.length; i++) {
+                for (let j = 0; j < fc1Weights[i].length; j++) {
+                    fc1Weights[i][j] -= learningRate * fc1Gradients[i][j];
+                }
+            }
+
+            // Mise à jour FC2
+            for (let i = 0; i < fc2Weights.length; i++) {
+                for (let j = 0; j < fc2Weights[i].length; j++) {
+                    fc2Weights[i][j] -= learningRate * fc2Gradients[i][j];
+                }
+            }
+
+            // Mettre à jour les données globales
+            kernelData = newKernelData;
+
+            await sleep(1000);
+
+            document.getElementById('fc-step-info').textContent = 
+                `Backward Pass terminé ! Poids mis à jour (LR: ${learningRate})`;
+            
+            // Calculer la nouvelle loss après mise à jour
+            const newConv = convolution2D(inputData, kernelData);
+            const newPool = maxPool2D(newConv, 2);
+            const newFlat = flatten(newPool);
+            
+            const newHidden = [];
+            for (let i = 0; i < fc1Weights[0].length; i++) {
+                let sum = 0;
+                for (let j = 0; j < newFlat.length; j++) {
+                    sum += newFlat[j] * fc1Weights[j][i];
+                }
+                newHidden.push(relu(sum));
+            }
+            
+            const newOutput = [];
+            for (let i = 0; i < fc2Weights[0].length; i++) {
+                let sum = 0;
+                for (let j = 0; j < newHidden.length; j++) {
+                    sum += newHidden[j] * fc2Weights[j][i];
+                }
+                newOutput.push(sigmoid(sum));
+            }
+            
+            const newLoss = calculateMSE(newOutput, target);
+            const improvement = currentLoss - newLoss;
+            
+            document.getElementById('loss-value').innerHTML = 
+                `Loss: ${newLoss.toFixed(4)} <br><small style="color: #4CAF50;">↓ -${improvement.toFixed(4)}</small>`;
+            
+            isAnimating = false;
+        }
+
+        async function runCompleteTraining() {
+            if (isAnimating) return;
+            
+            for (let epoch = 0; epoch < 3; epoch++) {
+                document.getElementById('conv-step-info').textContent = `Époque ${epoch + 1}/3 - Forward Pass`;
+                await runForwardPass();
+                await sleep(1000);
+                
+                document.getElementById('conv-step-info').textContent = `Époque ${epoch + 1}/3 - Backward Pass`;
+                await runBackwardPass();
+                await sleep(1500);
+            }
+            
+            document.getElementById('conv-step-info').textContent = 'Entraînement terminé sur 3 époques !';
+            document.getElementById('fc-step-info').textContent = 'Le réseau a appris à réduire la loss !';
+        }
+
+        function resetAnimation() {
+            isAnimating = false;
+            
+            // Réinitialiser les poids
+            kernelData = [
+                [0.5, -0.2],
+                [0.1, 0.8]
+            ];
+            
+            fc1Weights = [
+                [0.3, 0.5, -0.2],
+                [0.7, -0.1, 0.4],
+                [0.2, 0.6, 0.8]
+            ];
+            
+            fc2Weights = [
+                [0.4, -0.3],
+                [0.6, 0.7],
+                [-0.2, 0.5]
+            ];
+            
+            forwardResults = {};
+            currentPrediction = [0, 0];
+            currentLoss = 0;
+            
+            // Nettoyer les affichages
+            document.querySelectorAll('.weights-section').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.highlighted, .result-highlighted, .gradient-highlighted, .weight-update')
+                .forEach(el => el.classList.remove('highlighted', 'result-highlighted', 'gradient-highlighted', 'weight-update'));
+            
+            document.getElementById('conv-step-info').textContent = 'En attente du Forward Pass...';
+            document.getElementById('pool-step-info').textContent = 'En attente...';
+            document.getElementById('fc-step-info').textContent = 'En attente...';
+            document.getElementById('conv-calculation').textContent = 'Calcul: En attente...';
+            document.getElementById('fc-calculation').textContent = 'Calcul: En attente...';
+            document.getElementById('prediction-display').textContent = '[?, ?]';
+            document.getElementById('loss-value').textContent = 'Loss: ?';
+            
+            // Réinitialiser toutes les matrices avec des placeholders
+            const containers = ['input-matrix', 'kernel-matrix', 'output-matrix', 'pooling-input', 'pooling-output', 
+                              'fc-input', 'fc-hidden', 'fc-output', 'fc-weights1', 'fc-weights2'];
+            
+            containers.forEach(id => {
+                const container = document.getElementById(id);
+                if (container) {
+                    container.innerHTML = '';
+                    const cellCount = id.includes('kernel') ? 4 : id.includes('input-matrix') ? 9 : 
+                                    id.includes('output-matrix') ? 4 : id.includes('pooling') ? (id.includes('input') ? 4 : 1) :
+                                    id.includes('fc-input') ? 1 : id.includes('fc-hidden') ? 3 : 
+                                    id.includes('fc-output') ? 2 : id.includes('weights1') ? 3 : 6;
+                    
+                    for (let i = 0; i < cellCount; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell fc-cell';
+                        cell.textContent = '?';
+                        container.appendChild(cell);
+                    }
+                }
+            });
+            
+            initializeNetworkView();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialisation au chargement
+        window.onload = function() {
+            resetAnimation();
+        };
+    </script>
+</body>
+</html>
