@@ -59,11 +59,24 @@ for mot in mots_test:
         for mot_sim, score in similaires:
             print(f"  - {mot_sim}: {score:.3f}")
 
-print(f"\n EXERCICES PRATIQUES")
-print("=" * 25)
-
-print("\n1. Complétez cette analogie : 'chat' est à 'chien' comme 'poisson' est à... ?")
-
+print(f"\n1. Complétez cette analogie : 'chat' est à 'chien' comme 'poisson' est à {model.wv.most_similar(positive=['chien', 'poisson'], negative=['chat'], topn=1)} ?" )
+ 
 print(f"\n2. Classez ces mots par similarité avec 'animal':")
 mots_a_classer = ['chat', 'mange', 'jardin', 'chien']
 scores = []
+for mot in mots_a_classer:
+    sim = calculer_similarite('animaux', mot, model)
+    if sim:
+        scores.append((mot, sim))
+print(scores)
+scores.sort(key=lambda mot: mot[1], reverse=True)
+for mot, score in scores:
+    print(f"  - {mot}: {score:.3f}")
+
+print(f"\n3. Trouvez l'intrus dans cette liste : ['chat', 'chien', 'poisson', 'canapé']")
+mots_groupe = ['chat', 'chien', 'poisson', 'aquarium']
+try:
+    intrus = model.wv.doesnt_match(mots_groupe)
+    print(f"   L'intrus est : {intrus}")
+except:
+    print("   Calcul d'intrus impossible avec ce vocabulaire")
