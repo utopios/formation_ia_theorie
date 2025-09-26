@@ -68,3 +68,19 @@ class ReseauSimple:
                 activation = couche.forward(activation, 'tanh')
         
         return activation
+
+
+import math
+
+def calculate_tanh(x, y):
+    """
+    Calcule la tangente hyperbolique pour deux valeurs données.
+    
+    Args:
+        x: Premier nombre
+        y: Deuxième nombre
+    
+    Returns:
+        Liste des valeurs tanh correspondantes [tanh(x), tanh(y)]
+    """
+    return [math.tanh(x), math.tanh(y)]
