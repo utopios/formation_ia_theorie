@@ -65,3 +65,5 @@ print("=" * 25)
 print("\n1. Complétez cette analogie : 'chat' est à 'chien' comme 'poisson' est à... ?")
 
 print(f"\n2. Classez ces mots par similarité avec 'animal':")
+mots_a_classer = ['chat', 'mange', 'jardin', 'chien']
+scores = []
