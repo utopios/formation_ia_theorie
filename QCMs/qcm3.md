@@ -1,101 +1,105 @@
-# **Chapitre 3 : Convolutional Neural Networks (CNN)**
+# **Chapitre 4 : Réseaux récurrents (RNN, LSTM)**
 
-1. Une couche de convolution (CONV) sert à :
-   A. Appliquer une transformation linéaire complète
-   B. Extraire des motifs locaux
-   C. Remplacer la fonction de perte
-   D. Réduire la taille du dataset
+1. Un réseau récurrent est adapté pour :
+   A. Les images fixes
+   B. Les données séquentielles
+   C. Les graphes
+   D. Les données tabulaires uniquement
 
-2. Le filtre (kernel) est :
-   A. Une matrice de poids partagée
-   B. Une fonction d’activation
-   C. Un biais fixe
-   D. Une normalisation
+2. La particularité d’un RNN est :
+   A. Il n’utilise pas de poids
+   B. Il garde une mémoire des états précédents
+   C. Il fonctionne sans activation
+   D. Il ne fait pas de rétropropagation
 
-3. Vrai ou Faux : un même filtre est appliqué à toutes les régions d’une image.
+3. Vrai ou Faux : les RNN classiques souffrent du problème du gradient qui disparaît.
 
-4. Le pooling sert à :
-   A. Augmenter la dimensionnalité
-   B. Réduire la dimensionnalité et extraire les caractéristiques robustes
-   C. Supprimer les biais
-   D. Normaliser les entrées
+4. LSTM signifie :
+   A. Long Short-Term Memory
+   B. Large Scale Training Model
+   C. Linear Sequence Time Model
+   D. Logistic Sequential Training Mechanism
 
-5. ReLU est souvent utilisée dans les CNN car :
-   A. Elle est toujours convexe
-   B. Elle accélère l’apprentissage et évite le problème du gradient qui disparaît
-   C. Elle réduit automatiquement la dimensionnalité
-   D. Elle remplace le pooling
+5. L’architecture LSTM inclut :
+   A. Des portes (input, forget, output)
+   B. Uniquement des convolutions
+   C. Un autoencodeur
+   D. Des perceptrons uniquement
 
-6. Une couche entièrement connectée (FC) en fin de CNN sert à :
-   A. Extraire les motifs
-   B. Décider de la sortie finale (classe, score, etc.)
-   C. Remplacer les filtres
-   D. Supprimer la normalisation
+6. La porte d’oubli (forget gate) sert à :
+   A. Supprimer toujours l’information
+   B. Contrôler quelles informations du passé garder ou oublier
+   C. Ajouter du bruit
+   D. Normaliser la séquence
 
-7. Vrai ou Faux : le surapprentissage peut être réduit par la technique du dropout.
+7. La porte d’entrée (input gate) décide :
+   A. Quelle nouvelle information ajouter à l’état mémoire
+   B. Quelle sortie donner directement
+   C. Quels poids supprimer
+   D. Quelle séquence ignorer
 
-8. Le choix du nombre de filtres dans un CNN dépend :
-   A. Du nombre de classes uniquement
-   B. De la complexité des motifs à apprendre
-   C. De la taille du batch
-   D. Du taux d’apprentissage
+8. La porte de sortie (output gate) contrôle :
+   A. Le gradient
+   B. La sortie de l’état caché
+   C. La normalisation
+   D. La taille du batch
 
-9. Le max pooling conserve :
-   A. La valeur maximale d’une région
-   B. La valeur moyenne
-   C. Le biais
-   D. Le gradient
+9. Vrai ou Faux : un LSTM peut gérer des dépendances longues.
 
-10. Exemple de régularisation explicite :
-    A. Dropout
-    B. Weight decay
-    C. Data augmentation
-    D. Normalisation batch
+10. L’entraînement d’un LSTM utilise :
+    A. Backpropagation Through Time (BPTT)
+    B. Rétropropagation simple
+    C. Pas d’entraînement
+    D. Uniquement des heuristiques
 
-11. Vrai ou Faux : augmenter artificiellement les données améliore la généralisation.
+11. Les applications typiques d’un LSTM incluent :
+    A. La traduction automatique
+    B. La classification d’images fixes
+    C. La compression vidéo
+    D. La détection de contours
 
-12. La couche de perte (loss) mesure :
-    A. L’écart entre prédictions et vraies valeurs
-    B. Le nombre de couches
-    C. La vitesse d’exécution
-    D. La taille de l’image
+12. Le GRU est :
+    A. Une variante simplifiée du LSTM
+    B. Un CNN
+    C. Un autoencodeur
+    D. Une fonction d’activation
 
-13. Un CNN est particulièrement adapté pour :
-    A. Les images et signaux structurés
-    B. Les tableaux de données simples
-    C. Les graphes sociaux
-    D. Les systèmes bayésiens
+13. Vrai ou Faux : un LSTM est plus rapide qu’un GRU.
 
-14. L’augmentation de la taille du réseau (plus de filtres, couches) entraîne :
-    A. Toujours une meilleure généralisation
-    B. Plus de capacité d’apprentissage mais aussi risque d’overfitting
-    C. Une suppression de la perte
-    D. Une simplification des données
-
-15. Vrai ou Faux : un CNN est invariant aux translations grâce aux convolutions.
-
-16. Un filtre de Sobel est utilisé pour :
-    A. Détecter des contours
-    B. Réduire la dimension
-    C. Supprimer les biais
-    D. Augmenter la précision
-
-17. La régularisation L2 est équivalente à :
-    A. Dropout
-    B. Weight decay
-    C. Batch normalization
+14. Le problème du gradient explosif est traité par :
+    A. Gradient clipping
+    B. Dropout
+    C. Augmentation de données
     D. Max pooling
 
-18. Le choix de la taille du filtre dépend :
-    A. De la complexité des motifs à capter
-    B. Du nombre de classes
-    C. Du type de fonction de perte
-    D. Du biais
+15. Un état caché (hidden state) :
+    A. Contient une représentation des séquences précédentes
+    B. Est identique à l’entrée
+    C. Est inutile pour la sortie
+    D. Est remplacé par le biais
 
-19. La normalisation batch sert à :
-    A. Stabiliser l’entraînement
-    B. Supprimer la rétropropagation
-    C. Réduire la taille du réseau
-    D. Remplacer la perte
+16. LSTM est particulièrement utile pour :
+    A. Les séries temporelles
+    B. Les images fixes
+    C. Les graphes
+    D. Les données tabulaires
 
-20. Vrai ou Faux : les CNN modernes utilisent souvent des blocs empilés (VGG, ResNet).
+17. La sortie finale d’un LSTM peut être :
+    A. Une valeur unique ou une séquence
+    B. Toujours une valeur unique
+    C. Toujours une probabilité
+    D. Toujours un vecteur
+
+18. Vrai ou Faux : un LSTM peut être combiné avec un CNN.
+
+19. Un bi-LSTM lit :
+    A. Les séquences uniquement en avant
+    B. Les séquences dans les deux sens
+    C. Les images
+    D. Les graphes
+
+20. Le mécanisme d’attention peut être combiné avec LSTM pour :
+    A. Se concentrer sur les parties importantes d’une séquence
+    B. Remplacer les fonctions d’activation
+    C. Supprimer la rétropropagation
+    D. Réduire la taille des filtres
