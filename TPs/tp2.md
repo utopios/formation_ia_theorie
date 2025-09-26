@@ -66,9 +66,9 @@ Proposez une couche de convolution équivalente au Max Pooling 2×2 avec stride 
 **Testez manuellement :** Appliquez chaque fonction sur le vecteur [-2, -0.5, 0, 0.5, 2]
 
 ```
-ReLU(x) = max(0, x)
-Sigmoid(x) = 1 / (1 + e^(-x))
-Tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x))
+ReLU(x) = max(0, x) [0, 0, 0, 0.5, 2]
+Sigmoid(x) = 1 / (1 + e^(-x)) [0.119, 0.377, 0.5, 0.622, 0.881]
+Tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x)) [-0.964, -0.462, 0, 0.462, 0.964]
 ```
 
 **Questions :**
@@ -85,11 +85,11 @@ INPUT → CONV1 → ReLU → POOL1 → CONV2 → ReLU → POOL2 → FC1 → ReLU
 ```
 
 **Détail des couches :**
-- **CONV1 :** 16 filtres 5×5×3, stride=1, padding=2
-- **POOL1 :** Max pooling 2×2, stride=2
-- **CONV2 :** 32 filtres 5×5×16, stride=1, padding=2
-- **POOL2 :** Max pooling 2×2, stride=2
-- **FC1 :** 8×8×32 → 512 neurones
+- **CONV1 :** 16 filtres 5×5×3, stride=1, padding=2 32x32x16
+- **POOL1 :** Max pooling 2×2, stride=2 16x16x16
+- **CONV2 :** 32 filtres 5×5×16, stride=1, padding=2 16x16x32
+- **POOL2 :** Max pooling 2×2, stride=2 8x8x32
+- **FC1 :** 8×8×32 → 512 neurones 
 - **FC2 :** 512 → 10 neurones (classification 10 classes)
 
 #### Calculs demandés :
